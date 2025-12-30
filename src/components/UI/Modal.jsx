@@ -4,9 +4,12 @@ import { useEffect, useRef } from 'react'
 export default function Modal({ children, open, className = '', ...props }) {
   const dialogRef = useRef()
   useEffect(() => {
+    const modal = dialogRef.current
     if (open) {
-      dialogRef.current.showModal()
+      modal.showModal()
     }
+
+    return () => modal.close()
   }, [open])
   return createPortal(
     <dialog ref={dialogRef} className={`modal ${className}`}>
