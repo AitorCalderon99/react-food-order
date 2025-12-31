@@ -23,7 +23,7 @@ export default function Checkout() {
     }, 0)
   )
 
-  const { data, loading, error, sendRequest } = useHttp(
+  const { data, loading, error, sendRequest, clearData } = useHttp(
     'http://localhost:3000/orders',
     requestConfig
   )
@@ -44,6 +44,12 @@ export default function Checkout() {
     )
   }
 
+  function handleFinish() {
+    userProgressContext.hideCheckout()
+    cartContext.clearCart()
+    clearData()
+  }
+
   let actions = (
     <>
       <Button type="button" textOnly onClick={userProgressContext.hideCheckout}>
@@ -61,12 +67,12 @@ export default function Checkout() {
     return (
       <Modal
         open={userProgressContext.progress === 'checkout'}
-        onClose={userProgressContext.hideCheckout}
+        onClose={handleFinish}
       >
         <h2>Success!</h2>
         <p>Your order has been submitted successfully.</p>
         <p className="modal-actions">
-          <Button onClick={userProgressContext.hideCheckout}>Okay</Button>
+          <Button onClick={handleFinish}>Okay</Button>
         </p>
       </Modal>
     )
