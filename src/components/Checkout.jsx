@@ -5,6 +5,13 @@ import { currencyFormatter } from '../util/formatting.js'
 import Input from './UI/Input.jsx'
 import Button from './UI/Button.jsx'
 import UserProgressContext from '../store/UserProgressContext.jsx'
+import useHttp from '../hooks/useHttp.jsx'
+import Error from './Error.jsx'
+
+const requestConfig = {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+}
 
 export default function Checkout() {
   const cartContext = useContext(CartContext)
@@ -16,24 +23,53 @@ export default function Checkout() {
     }, 0)
   )
 
+  const { data, loading, error, sendRequest } = useHttp(
+    'http://localhost:3000/orders',
+    requestConfig
+  )
+
   function handleSubmit(event) {
     event.preventDefault()
 
     const fd = new FormData(event.target)
     const customerData = Object.fromEntries(fd.entries())
 
-    fetch('http://localhost:3000/orders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    sendRequest(
+      JSON.stringify({
         order: {
           items: cartContext.items,
           customer: customerData,
         },
-      }),
-    })
+      })
+    )
+  }
+
+  let actions = (
+    <>
+      <Button type="button" textOnly onClick={userProgressContext.hideCheckout}>
+        Close
+      </Button>
+      <Button>Submit order</Button>
+    </>
+  )
+
+  if (loading) {
+    actions = <span>Sending order data...</span>
+  }
+
+  if (data && !error) {
+    return (
+      <Modal
+        open={userProgressContext.progress === 'checkout'}
+        onClose={userProgressContext.hideCheckout}
+      >
+        <h2>Success!</h2>
+        <p>Your order has been submitted successfully.</p>
+        <p className="modal-actions">
+          <Button onClick={userProgressContext.hideCheckout}>Okay</Button>
+        </p>
+      </Modal>
+    )
   }
 
   return (
@@ -55,16 +91,8 @@ export default function Checkout() {
           <Input label="Postal code" type="text" id="postal-code" />
           <Input label="City" type="text" id="city" />
         </div>
-        <p className="modal-actions">
-          <Button
-            type="button"
-            textOnly
-            onClick={userProgressContext.hideCheckout}
-          >
-            Close
-          </Button>
-          <Button>Submit order</Button>
-        </p>
+        {error && <Error message={error} title="Failed to submit" />}
+        <p className="modal-actions">{actions}</p>
       </form>
     </Modal>
   )
